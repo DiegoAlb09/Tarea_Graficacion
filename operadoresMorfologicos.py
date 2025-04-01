@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import os
+from skimage.morphology import skeletonize
 
 def aplicar_operadores_morfologicos(imagen):
     kernel = np.ones((3,3), np.uint8)  # Kernel 3x3 para operaciones
@@ -9,13 +10,12 @@ def aplicar_operadores_morfologicos(imagen):
     cierre = cv2.morphologyEx(imagen, cv2.MORPH_CLOSE, kernel)  # Suavizar bordes
     dilatacion = cv2.dilate(imagen, kernel, iterations=2)  # Rellenar huecos
     
-    # Esqueletización (aproximada con erosión iterativa)
-    esqueleto = np.zeros_like(imagen)
-    temp = np.copy(imagen)
-    while cv2.countNonZero(temp) > 0:
-        eroded = cv2.erode(temp, kernel)
-        temp = eroded
-        esqueleto = cv2.bitwise_or(esqueleto, cv2.subtract(temp, eroded))
+    # Esqueletización usando skimage.morphology
+    # Convertir a formato binario (True/False) requerido por skimage
+    imagen_binaria = imagen > 0
+    esqueleto = skeletonize(imagen_binaria)
+    # Convertir de vuelta a formato uint8 para OpenCV
+    esqueleto = (esqueleto * 255).astype(np.uint8)
     
     return apertura, cierre, dilatacion, esqueleto
 
